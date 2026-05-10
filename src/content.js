@@ -16,8 +16,12 @@
   /* ================================================
        Constants
     ================================================ */
-  const SNAP_PEEK_L = 8;
-  const SNAP_PEEK_R = 12;
+  // Fab resting & peek geometry. All positions are derived from the
+  // scrollable content width (innerWidth - scrollbarW), so peek distance
+  // and visible sliver are symmetric on both sides regardless of whether
+  // the page has a scrollbar.
+  const FAB_PEEK_VISIBLE = 18;  // px of fab visible when snapped to the edge
+  const FAB_PEEK_GAP = 15;      // px from edge to fab's inner side when hovered-out
   const scrollbarW = () => window.innerWidth - document.documentElement.clientWidth;
   const PANEL_W = 420;
   const MARGIN = 10;
@@ -264,20 +268,30 @@
   }
 
   /* ================================================
-       Position main panel relative to the fab
+       Position main panel relative to the fab.
+       Anchored to the fab's *peek* position (not runtime rect), so the
+       panel's distance from the viewport edge is identical whether the
+       fab is currently snapped, peeking, or mid-animation. Without this,
+       opening the panel during peek then letting the fab snap back would
+       cause the panel to jump inward on the next re-position.
     ================================================ */
   function positionMainPanelBasedOnFab() {
     const fab = $("ais-fab");
     const mainPanel = $("ais-main");
     if (!fab || !mainPanel) return;
     const fabRect = fab.getBoundingClientRect();
-    const isLeft = fabRect.left < window.innerWidth / 2;
+    const isLeft = fabRect.left + fabRect.width / 2 < window.innerWidth / 2;
+    const vR = window.innerWidth - scrollbarW();
 
     mainPanel.style.right = "auto";
     mainPanel.style.bottom = "auto";
 
-    let leftPos = isLeft ? fabRect.right + 15 : fabRect.left - PANEL_W - 15;
-    leftPos = Math.max(MARGIN, Math.min(window.innerWidth - PANEL_W - MARGIN, leftPos));
+    // Virtual fab x-extent at peek position — used as the anchor.
+    const peekLeftEdge = isLeft ? FAB_PEEK_GAP : vR - fab.offsetWidth - FAB_PEEK_GAP;
+    const peekRightEdge = peekLeftEdge + fab.offsetWidth;
+
+    let leftPos = isLeft ? peekRightEdge + 15 : peekLeftEdge - PANEL_W - 15;
+    leftPos = Math.max(MARGIN, Math.min(vR - PANEL_W - MARGIN, leftPos));
     mainPanel.style.left = leftPos + "px";
 
     const panelHeight = mainPanel.offsetHeight || PANEL_W;
@@ -364,10 +378,14 @@
     let hoverOutTimer = null;
     let pointerMoveScheduled = false;
 
-    const snapLeftX = () => -(fab.offsetWidth - SNAP_PEEK_L) + MARGIN;
-    const snapRightX = () => window.innerWidth - SNAP_PEEK_R - MARGIN - scrollbarW();
-    const peekLeftX = () => 15;
-    const peekRightX = () => window.innerWidth - fab.offsetWidth - 15;
+    // Symmetric geometry: viewport-edge X positions.
+    // Right side uses `viewportRight()` (excludes scrollbar) so peek
+    // travel is identical to the left side.
+    const viewportRight = () => window.innerWidth - scrollbarW();
+    const snapLeftX = () => -(fab.offsetWidth - FAB_PEEK_VISIBLE);
+    const snapRightX = () => viewportRight() - FAB_PEEK_VISIBLE;
+    const peekLeftX = () => FAB_PEEK_GAP;
+    const peekRightX = () => viewportRight() - fab.offsetWidth - FAB_PEEK_GAP;
     const currentSide = () => {
       const r = fab.getBoundingClientRect();
       return r.left + r.width / 2 < window.innerWidth / 2 ? "left" : "right";
@@ -549,7 +567,10 @@
           () => fab.classList.remove("ais-fab-clicking"),
           { once: true });
         panelOpen = !panelOpen;
-        if (panelOpen) positionMainPanelBasedOnFab();
+        if (panelOpen) {
+          positionMainPanelBasedOnFab();
+          maybeAutoSummarize();
+        }
         toggle("ais-main", panelOpen);
         // Don't re-evaluate hover on click — user is busy with the panel.
         return;
@@ -631,6 +652,16 @@
       apiKey: got.apiKey || "",
       apiUrl: got.apiUrl || "",
     };
+  }
+
+  // Triggered when the user opens the panel via the floating button.
+  // Only auto-runs the summary if the user enabled the setting and we
+  // haven't already started/finished one in this session.
+  async function maybeAutoSummarize() {
+    if (streaming) return;
+    if (chatHistory.length > 0) return; // already summarized this session
+    const got = await chrome.storage.local.get("autoSummarizeOnOpen");
+    if (got.autoSummarizeOnOpen) doSummary();
   }
 
   async function doSummary() {
@@ -780,10 +811,11 @@
       const isLeft = rect.left + rect.width / 2 < window.innerWidth / 2;
       window.snapSide = isLeft ? "left" : "right";
       fab.style.transition = "none";
+      const vR = window.innerWidth - (window.innerWidth - document.documentElement.clientWidth);
       fab.style.left =
         (isLeft
-          ? -(fab.offsetWidth - SNAP_PEEK_L) + MARGIN
-          : window.innerWidth - SNAP_PEEK_R - MARGIN - scrollbarW()) + "px";
+          ? -(fab.offsetWidth - FAB_PEEK_VISIBLE)
+          : vR - FAB_PEEK_VISIBLE) + "px";
     };
 
     window.addEventListener("resize", async () => {

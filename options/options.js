@@ -11,6 +11,7 @@ function fillForm(cfg) {
   $("f-maxlen").value = cfg.maxContentLength ?? 16000;
   $("f-temp").value = cfg.temperature ?? 0.7;
   $("f-stream").checked = !!cfg.stream;
+  $("f-auto").checked = !!cfg.autoSummarizeOnOpen;
   $("f-sys").value = cfg.systemPrompt ?? "";
   $("f-prompt").value = cfg.userPrompt ?? "";
 }
@@ -51,6 +52,7 @@ $("save").addEventListener("click", async () => {
     maxContentLength: +$("f-maxlen").value || DEFAULTS.maxContentLength,
     temperature: parseFloat($("f-temp").value) || DEFAULTS.temperature,
     stream: $("f-stream").checked,
+    autoSummarizeOnOpen: $("f-auto").checked,
     systemPrompt: $("f-sys").value,
     userPrompt: $("f-prompt").value,
   });

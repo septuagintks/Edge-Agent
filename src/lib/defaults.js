@@ -6,6 +6,7 @@ export const DEFAULTS = {
   temperature: 0.7,
   stream: true,
   maxContentLength: 16000,
+  autoSummarizeOnOpen: false,
   systemPrompt:
     "You are a professional web content analysis assistant, skilled at extracting and summarizing the core content of articles, providing concise and clear answers.",
   userPrompt: `Please provide a summary and analysis of the following webpage content:
