@@ -68,6 +68,60 @@ textarea { resize: vertical; min-height: 70px; }
   gap: 12px;
 }
 
+.field-block {
+  margin: 12px 0 16px;
+}
+.field-block .lbl-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.field-block .lbl {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  background: #f3f4f6;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 3px;
+  gap: 3px;
+  position: relative;
+  user-select: none;
+}
+.segmented .seg {
+  padding: 8px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color .18s ease, background .18s ease, box-shadow .18s ease, transform .12s ease;
+}
+.segmented .seg:hover { color: #4b5563; }
+.segmented .seg:active { transform: scale(.97); }
+.segmented .seg.active {
+  background: #fff;
+  color: #4f46e5;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 0 0 1px rgba(99,102,241,.18);
+}
+.hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #9ca3af;
+  line-height: 1.55;
+  min-height: 1.5em;
+}
+
 .presets {
   display: flex;
   flex-wrap: wrap;

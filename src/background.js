@@ -137,7 +137,18 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   }
 });
 
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener(async () => {
+  // Migrate old key autoSummarizeOnOpen -> summarizeMode.
+  try {
+    const got = await chrome.storage.local.get(["autoSummarizeOnOpen", "summarizeMode"]);
+    if (got.summarizeMode == null && got.autoSummarizeOnOpen != null) {
+      await chrome.storage.local.set({
+        summarizeMode: got.autoSummarizeOnOpen ? "on-open" : "off",
+      });
+      await chrome.storage.local.remove("autoSummarizeOnOpen");
+    }
+  } catch {}
+
   try {
     chrome.contextMenus.create({
       id: "ai-summary-run",

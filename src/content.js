@@ -359,8 +359,9 @@
   const FAB_DUR_SNAP = 420;
   const FAB_DUR_PEEK_IN = 340;     // slower than before per user feedback
   const FAB_DUR_PEEK_OUT = 440;
-  const HOVER_ZONE_W = 56;         // pointer hit zone, measured inward from the snap edge
-  const HOVER_ZONE_PAD_Y = 24;     // extra vertical padding around the snapped fab
+  const HOVER_ENTER_W = 56;        // hit zone for triggering peek (small strip at edge)
+  const HOVER_DISMISS_PAD = 28;    // padding around the peeked fab for dismissal
+  const HOVER_ZONE_PAD_Y = 24;     // extra vertical padding (used for both zones)
   const HOVER_DEBOUNCE_IN = 120;
   const HOVER_DEBOUNCE_OUT = 180;
 
@@ -418,48 +419,79 @@
       if (hoverOutTimer) { clearTimeout(hoverOutTimer); hoverOutTimer = null; }
     }
 
-    /* ---- Hover zone, anchored at the SNAPPED position (not runtime rect) ---- */
-    function pointerInHoverZone(x, y) {
+    /* ---- Hover zones:
+         - enter zone  : a narrow strip along the snap edge; triggers peek
+         - dismiss zone: the peeked fab's bounding box plus padding on all
+           four sides; only leaving THIS zone ends the peek.
+         Both zones are anchored to the viewport edge, not the runtime fab
+         rect, so animation progress never affects hit-testing. ---- */
+    function enterZone() {
       const side = currentSide();
       const fabTop = parseFloat(fab.style.top) || fab.getBoundingClientRect().top;
       const fabH = fab.offsetHeight || 35;
-      // X-band: from the screen edge inward by HOVER_ZONE_W.
-      // Use 0/innerWidth as the edges so the zone covers the visible
-      // sliver of the fab too, regardless of its current peek state.
-      const xMin = side === "left" ? 0 : window.innerWidth - HOVER_ZONE_W;
-      const xMax = side === "left" ? HOVER_ZONE_W : window.innerWidth;
-      const yMin = fabTop - HOVER_ZONE_PAD_Y;
-      const yMax = fabTop + fabH + HOVER_ZONE_PAD_Y;
-      return x >= xMin && x <= xMax && y >= yMin && y <= yMax;
+      const vR = viewportRight();
+      return {
+        xMin: side === "left" ? 0 : vR - HOVER_ENTER_W,
+        xMax: side === "left" ? HOVER_ENTER_W : vR,
+        yMin: fabTop - HOVER_ZONE_PAD_Y,
+        yMax: fabTop + fabH + HOVER_ZONE_PAD_Y,
+      };
     }
+    function dismissZone() {
+      const side = currentSide();
+      const fabTop = parseFloat(fab.style.top) || fab.getBoundingClientRect().top;
+      const fabH = fab.offsetHeight || 35;
+      const fabW = fab.offsetWidth || 35;
+      const vR = viewportRight();
+      // Peeked fab's inner edge (toward screen center).
+      const peekFar = side === "left"
+        ? FAB_PEEK_GAP + fabW
+        : vR - FAB_PEEK_GAP - fabW;
+      return {
+        xMin: side === "left" ? 0 : peekFar - HOVER_DISMISS_PAD,
+        xMax: side === "left" ? peekFar + HOVER_DISMISS_PAD : vR,
+        yMin: fabTop - HOVER_ZONE_PAD_Y - HOVER_DISMISS_PAD,
+        yMax: fabTop + fabH + HOVER_ZONE_PAD_Y + HOVER_DISMISS_PAD,
+      };
+    }
+    const inBox = (x, y, z) => x >= z.xMin && x <= z.xMax && y >= z.yMin && y <= z.yMax;
+    function pointerCanTriggerPeek(x, y) { return inBox(x, y, enterZone()); }
+    function pointerInDismissZone(x, y) { return inBox(x, y, dismissZone()); }
 
     function evaluateHover() {
       if (state !== "idle" && state !== "hovering") return;
-      const inside = pointerInHoverZone(lastPointer.x, lastPointer.y);
-      if (inside && state === "idle") {
-        if (hoverInTimer) return;
-        if (hoverOutTimer) { clearTimeout(hoverOutTimer); hoverOutTimer = null; }
-        hoverInTimer = setTimeout(() => {
+      const x = lastPointer.x, y = lastPointer.y;
+      if (state === "idle") {
+        const inside = pointerCanTriggerPeek(x, y);
+        if (inside) {
+          if (hoverInTimer) return;
+          if (hoverOutTimer) { clearTimeout(hoverOutTimer); hoverOutTimer = null; }
+          hoverInTimer = setTimeout(() => {
+            hoverInTimer = null;
+            if (state !== "idle") return;
+            if (!pointerCanTriggerPeek(lastPointer.x, lastPointer.y)) return;
+            startPeek();
+          }, HOVER_DEBOUNCE_IN);
+        } else if (hoverInTimer) {
+          clearTimeout(hoverInTimer);
           hoverInTimer = null;
-          if (state !== "idle") return;
-          if (!pointerInHoverZone(lastPointer.x, lastPointer.y)) return;
-          startPeek();
-        }, HOVER_DEBOUNCE_IN);
-      } else if (!inside && state === "hovering") {
-        if (hoverOutTimer) return;
-        if (hoverInTimer) { clearTimeout(hoverInTimer); hoverInTimer = null; }
-        hoverOutTimer = setTimeout(() => {
+        }
+      } else {
+        // state === "hovering" — use the larger dismiss zone.
+        const inside = pointerInDismissZone(x, y);
+        if (!inside) {
+          if (hoverOutTimer) return;
+          hoverOutTimer = setTimeout(() => {
+            hoverOutTimer = null;
+            if (state !== "hovering") return;
+            if (pointerInDismissZone(lastPointer.x, lastPointer.y)) return;
+            endPeek();
+          }, HOVER_DEBOUNCE_OUT);
+        } else if (hoverOutTimer) {
+          // Re-entered while a pending out-debounce was running.
+          clearTimeout(hoverOutTimer);
           hoverOutTimer = null;
-          if (state !== "hovering") return;
-          if (pointerInHoverZone(lastPointer.x, lastPointer.y)) return;
-          endPeek();
-        }, HOVER_DEBOUNCE_OUT);
-      } else if (inside && state === "hovering") {
-        // Re-entered while a pending out-debounce was running.
-        if (hoverOutTimer) { clearTimeout(hoverOutTimer); hoverOutTimer = null; }
-      } else if (!inside && state === "idle") {
-        // Left during an in-debounce.
-        if (hoverInTimer) { clearTimeout(hoverInTimer); hoverInTimer = null; }
+        }
       }
     }
 
@@ -601,6 +633,7 @@
   function bindMainEvents() {
     $("ais-main-close").addEventListener("click", () => {
       panelOpen = false;
+      implicitState.attached = false; // implicit run continues in background but stops writing to DOM
       toggle("ais-main", false);
     });
     $("ais-cfg-open").addEventListener("click", () => {
@@ -616,6 +649,13 @@
       abortAPI();
       streaming = false;
       setLoading(false);
+      // If we were attached to an implicit run, mark it stopped so future
+      // panel opens don't re-attach to a dangling state.
+      if (implicitState.status === "running") {
+        implicitState.status = "done";
+        implicitState.text = fullText;
+      }
+      implicitState.attached = false;
       if (currentResNode) {
         currentResNode.innerHTML = renderMd(fullText || "Manually stopped");
         currentResNode.classList.remove("ais-cursor");
@@ -654,18 +694,151 @@
     };
   }
 
+  // Implicit-summarize state. Populated by runImplicit(); read whenever
+  // the panel is opened so the user sees the current progress / result.
+  // Status values: "idle" | "running" | "done" | "error"
+  const implicitState = {
+    status: "idle",
+    text: "",          // streamed-so-far content
+    error: "",
+    title: "",
+    contentLen: 0,
+    chatHistory: [],   // becomes the seed for follow-up after panel opens
+    attached: false,   // true while the visible panel is mirroring this run
+  };
+
+  async function runImplicit() {
+    if (implicitState.status === "running" || implicitState.status === "done") return;
+    const content = extractContent();
+    const title = document.title;
+    if (!content || content.length < 50) {
+      implicitState.status = "error";
+      implicitState.error = "Page content extraction failed or content is too short.";
+      return;
+    }
+    const cfg = await getCfg();
+    if (!cfg.apiKey && !cfg.apiUrl.includes("{key}")) {
+      // Don't auto-fire without credentials.
+      implicitState.status = "error";
+      implicitState.error = "API key not configured; open settings.";
+      return;
+    }
+    const userMsg = cfg.userPrompt
+      .replace("{title}", title)
+      .replace("{content}", String(content).slice(0, cfg.maxContentLength));
+    implicitState.status = "running";
+    implicitState.text = "";
+    implicitState.title = title;
+    implicitState.contentLen = content.length;
+    implicitState.chatHistory = [{ role: "user", content: userMsg }];
+
+    callAPI(implicitState.chatHistory, {
+      onChunk(full) {
+        implicitState.text = full;
+        if (implicitState.attached && currentResNode) {
+          currentResNode.innerHTML = renderMd(full);
+          const b = $("ais-body");
+          if (b) b.scrollTop = b.scrollHeight;
+        }
+      },
+      onDone(full) {
+        implicitState.status = "done";
+        implicitState.text = full;
+        implicitState.chatHistory.push({ role: "assistant", content: full });
+        if (implicitState.attached) {
+          streaming = false;
+          setLoading(false);
+          fullText = full;
+          chatHistory = implicitState.chatHistory.slice();
+          if (currentResNode) {
+            currentResNode.innerHTML = renderMd(full || "(AI returned empty content)");
+            currentResNode.classList.remove("ais-cursor");
+            currentResNode.removeAttribute("id");
+          }
+          implicitState.attached = false;
+          showChatMode();
+          positionMainPanelBasedOnFab();
+        }
+      },
+      onError(err) {
+        implicitState.status = "error";
+        implicitState.error = String(err);
+        if (implicitState.attached) {
+          streaming = false;
+          setLoading(false);
+          setBody(`<div class="ais-err">❌ ${esc(err)}</div>`);
+          $("ais-run").style.display = "";
+          $("ais-run").textContent = "🔄 Re-summarize";
+          implicitState.attached = false;
+        }
+      },
+    });
+  }
+
+  // Render the panel body to reflect whatever the implicit run currently
+  // shows. Called when the user opens the panel during/after an implicit run.
+  function renderImplicitInPanel() {
+    const metaEl = $("ais-meta");
+    if (metaEl && implicitState.title) {
+      metaEl.textContent = `📄 ${implicitState.title}  ·  Extracted ${implicitState.contentLen} chars`;
+    }
+
+    if (implicitState.status === "running") {
+      // Attach the visible UI to the running call.
+      implicitState.attached = true;
+      streaming = true;
+      fullText = implicitState.text;
+      chatHistory = implicitState.chatHistory.slice();
+      setLoading(true);
+      setBody(
+        `<div id="ais-current-res" class="ais-res ais-cursor">${
+          implicitState.text ? renderMd(implicitState.text) :
+          `<div class="ais-loading" style="padding:10px 0;"><div class="ais-spinner"></div> AI is analyzing...</div>`
+        }</div>`,
+      );
+      currentResNode = $("ais-current-res");
+      return;
+    }
+    if (implicitState.status === "done") {
+      streaming = false;
+      setLoading(false);
+      fullText = implicitState.text;
+      chatHistory = implicitState.chatHistory.slice();
+      setBody(`<div class="ais-res">${renderMd(implicitState.text || "(empty)")}</div>`);
+      currentResNode = null;
+      showChatMode();
+      return;
+    }
+    if (implicitState.status === "error") {
+      streaming = false;
+      setLoading(false);
+      setBody(`<div class="ais-err">❌ ${esc(implicitState.error)}</div>`);
+      $("ais-run").style.display = "";
+      $("ais-run").textContent = "🔄 Re-summarize";
+    }
+  }
+
   // Triggered when the user opens the panel via the floating button.
-  // Only auto-runs the summary if the user enabled the setting and we
-  // haven't already started/finished one in this session.
   async function maybeAutoSummarize() {
+    // Implicit mode: attach to the existing background run (running or done).
+    if (implicitState.status === "running" || implicitState.status === "done" || implicitState.status === "error") {
+      renderImplicitInPanel();
+      return;
+    }
     if (streaming) return;
-    if (chatHistory.length > 0) return; // already summarized this session
-    const got = await chrome.storage.local.get("autoSummarizeOnOpen");
-    if (got.autoSummarizeOnOpen) doSummary();
+    if (chatHistory.length > 0) return;
+    const got = await chrome.storage.local.get("summarizeMode");
+    if (got.summarizeMode === "on-open") doSummary();
   }
 
   async function doSummary() {
     if (streaming) return;
+    // An explicit (re-)summary supersedes any implicit background run.
+    implicitState.status = "idle";
+    implicitState.text = "";
+    implicitState.error = "";
+    implicitState.chatHistory = [];
+    implicitState.attached = false;
     streaming = true;
     fullText = "";
     chatHistory = [];
@@ -838,6 +1011,16 @@
     bindMainEvents();
     makeDraggable("ais-main");
     installPanelViewportClamp(mainPanel);
+
+    // Schedule background implicit summary if configured.
+    const cfgGot = await chrome.storage.local.get("summarizeMode");
+    if (cfgGot.summarizeMode === "implicit") scheduleImplicitRun();
+  }
+
+  function scheduleImplicitRun() {
+    const fire = () => setTimeout(runImplicit, 600); // small grace period for late-mounting content
+    if (document.readyState === "complete") fire();
+    else window.addEventListener("load", fire, { once: true });
   }
 
   /* ================================================

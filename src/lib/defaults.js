@@ -6,7 +6,11 @@ export const DEFAULTS = {
   temperature: 0.7,
   stream: true,
   maxContentLength: 16000,
-  autoSummarizeOnOpen: false,
+  // "off"        : do nothing on open
+  // "on-open"    : start summarizing when the user opens the panel
+  // "implicit"   : summarize in the background as soon as the page loads;
+  //                opening the panel just reveals whatever's ready
+  summarizeMode: "off",
   systemPrompt:
     "You are a professional web content analysis assistant, skilled at extracting and summarizing the core content of articles, providing concise and clear answers.",
   userPrompt: `Please provide a summary and analysis of the following webpage content:

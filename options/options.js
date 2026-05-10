@@ -3,6 +3,23 @@ import { Cfg } from "../src/lib/storage.js";
 
 const $ = (id) => document.getElementById(id);
 
+const MODE_HINTS = {
+  "off": "Opening the panel waits for you to click Start Summary.",
+  "on-open": "Clicking the floating button opens the panel and immediately starts summarizing.",
+  "implicit": "Summarization runs in the background as soon as the page finishes loading. Opening the panel shows progress or the finished result.",
+};
+
+let currentMode = "off";
+
+function setMode(mode) {
+  currentMode = mode;
+  for (const btn of document.querySelectorAll("#f-mode .seg")) {
+    btn.classList.toggle("active", btn.dataset.value === mode);
+    btn.setAttribute("aria-checked", btn.dataset.value === mode ? "true" : "false");
+  }
+  $("f-mode-hint").textContent = MODE_HINTS[mode] || "";
+}
+
 function fillForm(cfg) {
   $("f-url").value = cfg.apiUrl ?? "";
   $("f-key").value = cfg.apiKey ?? "";
@@ -11,9 +28,9 @@ function fillForm(cfg) {
   $("f-maxlen").value = cfg.maxContentLength ?? 16000;
   $("f-temp").value = cfg.temperature ?? 0.7;
   $("f-stream").checked = !!cfg.stream;
-  $("f-auto").checked = !!cfg.autoSummarizeOnOpen;
   $("f-sys").value = cfg.systemPrompt ?? "";
   $("f-prompt").value = cfg.userPrompt ?? "";
+  setMode(cfg.summarizeMode || "off");
 }
 
 function renderPresets() {
@@ -33,8 +50,29 @@ function renderPresets() {
   }
 }
 
+function bindSegmented() {
+  const root = $("f-mode");
+  root.addEventListener("click", (e) => {
+    const btn = e.target.closest(".seg");
+    if (!btn) return;
+    setMode(btn.dataset.value);
+  });
+  root.addEventListener("keydown", (e) => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    const segs = [...root.querySelectorAll(".seg")];
+    const i = segs.findIndex((s) => s.classList.contains("active"));
+    const next = e.key === "ArrowLeft"
+      ? segs[(i - 1 + segs.length) % segs.length]
+      : segs[(i + 1) % segs.length];
+    setMode(next.dataset.value);
+    next.focus();
+    e.preventDefault();
+  });
+}
+
 async function init() {
   renderPresets();
+  bindSegmented();
   fillForm(await Cfg.get());
 }
 
@@ -52,7 +90,7 @@ $("save").addEventListener("click", async () => {
     maxContentLength: +$("f-maxlen").value || DEFAULTS.maxContentLength,
     temperature: parseFloat($("f-temp").value) || DEFAULTS.temperature,
     stream: $("f-stream").checked,
-    autoSummarizeOnOpen: $("f-auto").checked,
+    summarizeMode: currentMode,
     systemPrompt: $("f-sys").value,
     userPrompt: $("f-prompt").value,
   });

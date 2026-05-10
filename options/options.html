@@ -9,6 +9,18 @@
     <main class="card">
       <header><h1>⚙️ AI Summary Settings</h1></header>
 
+      <section class="field-block">
+        <div class="lbl-row">
+          <span class="lbl">Summarize mode</span>
+        </div>
+        <div class="segmented" id="f-mode" role="radiogroup" aria-label="Summarize mode">
+          <button type="button" class="seg" data-value="off" role="radio">Off</button>
+          <button type="button" class="seg" data-value="on-open" role="radio">On open</button>
+          <button type="button" class="seg" data-value="implicit" role="radio">Implicit</button>
+        </div>
+        <div class="hint" id="f-mode-hint"></div>
+      </section>
+
       <section class="presets" id="presets"></section>
 
       <label>API URL
@@ -33,9 +45,6 @@
       </div>
       <label class="inline">
         <input id="f-stream" type="checkbox" /> Stream output
-      </label>
-      <label class="inline">
-        <input id="f-auto" type="checkbox" /> Summarize immediately when the panel opens
       </label>
       <label>System prompt
         <textarea id="f-sys" rows="3"></textarea>
