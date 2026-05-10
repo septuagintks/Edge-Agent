@@ -1,6 +1,6 @@
 # Edge Agent — AI Summary
 
-Microsoft Edge / Chromium extension port of the [AI-summary](../AI-summary) Tampermonkey script.
+Microsoft Edge / Chromium extension port of the [AI-summary](septuagintks/AI-summary) Tampermonkey script.
 
 One-click extraction of webpage main content, with intelligent summarization via AI APIs. Supports OpenAI, Anthropic, Gemini, DeepSeek, OpenRouter and other compatible interfaces. Supports streaming output and multi-round follow-up chat.
 
