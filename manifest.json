@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "AI Summary",
+  "version": "0.1.0",
+  "description": "One-click AI summary and follow-up chat on any webpage. Supports OpenAI, Anthropic, Gemini, DeepSeek and other compatible APIs.",
+  "author": "Septuagint",
+  "minimum_chrome_version": "114",
+  "action": {
+    "default_title": "AI Summary",
+    "default_popup": "src/popup/popup.html"
+  },
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  },
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content.js"],
+      "css": ["src/content.css"],
+      "run_at": "document_end",
+      "all_frames": false
+    }
+  ],
+  "permissions": ["storage", "activeTab", "scripting", "contextMenus"],
+  "host_permissions": ["<all_urls>"],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+S"
+      },
+      "description": "Toggle AI Summary panel"
+    }
+  }
+}

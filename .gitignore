@@ -1,0 +1,17 @@
+# Build / dependency artifacts
+node_modules/
+dist/
+build/
+*.zip
+*.crx
+*.pem
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

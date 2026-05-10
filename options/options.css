@@ -1,0 +1,110 @@
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 14px;
+  color: #1f2937;
+  background: #f3f4f6;
+}
+main.card {
+  max-width: 720px;
+  margin: 32px auto;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .08);
+  padding: 24px 28px;
+}
+header h1 {
+  font-size: 18px;
+  margin: 0 0 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f3f4f6;
+}
+label {
+  display: block;
+  margin: 12px 0;
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+label small {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #9ca3af;
+}
+label.inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: none;
+  font-weight: 500;
+  color: #1f2937;
+  font-size: 13px;
+}
+input[type="text"],
+input[type="password"],
+input[type="number"],
+textarea {
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #111;
+  background: #fafafa;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+input:focus, textarea:focus { border-color: #6366f1; background: #fff; }
+textarea { resize: vertical; min-height: 70px; }
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.pre {
+  padding: 4px 11px;
+  border: 1.5px solid #e0e7ff;
+  background: #eef2ff;
+  color: #4f46e5;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+}
+.pre:hover { background: #6366f1; color: #fff; border-color: #6366f1; }
+
+footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f3f4f6;
+}
+button {
+  padding: 9px 14px;
+  border: none;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+button.primary {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+}
+button.secondary { background: #f3f4f6; color: #374151; }
+.status { margin-left: auto; font-size: 12px; color: #16a34a; }

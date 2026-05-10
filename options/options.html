@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>AI Summary — Settings</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main class="card">
+      <header><h1>⚙️ AI Summary Settings</h1></header>
+
+      <section class="presets" id="presets"></section>
+
+      <label>API URL
+        <input id="f-url" type="text" placeholder="https://api.openai.com/v1/chat/completions" />
+      </label>
+      <label>API Key
+        <input id="f-key" type="password" placeholder="sk-..." />
+      </label>
+      <label>Model
+        <input id="f-model" type="text" placeholder="gpt-3.5-turbo" />
+      </label>
+      <div class="row">
+        <label>Max output tokens
+          <input id="f-tokens" type="number" min="100" max="8000" />
+        </label>
+        <label>Max content length
+          <input id="f-maxlen" type="number" min="1000" max="50000" />
+        </label>
+        <label>Temperature
+          <input id="f-temp" type="number" step="0.1" min="0" max="2" />
+        </label>
+      </div>
+      <label class="inline">
+        <input id="f-stream" type="checkbox" /> Stream output
+      </label>
+      <label>System prompt
+        <textarea id="f-sys" rows="3"></textarea>
+      </label>
+      <label>User prompt <small>(variables: {title} {content})</small>
+        <textarea id="f-prompt" rows="8"></textarea>
+      </label>
+
+      <footer>
+        <button id="reset" class="secondary">↩ Restore defaults</button>
+        <button id="save" class="primary">💾 Save</button>
+        <span id="status" class="status"></span>
+      </footer>
+    </main>
+    <script type="module" src="options.js"></script>
+  </body>
+</html>
