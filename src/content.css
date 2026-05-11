@@ -104,8 +104,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 12px 14px;
-  min-height: 46px;
+  padding: 14px 14px;
+  min-height: 54px;
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
   color: #fff;
   flex-shrink: 0;
@@ -118,10 +118,10 @@
   border: none;
   color: #fff;
   border-radius: 7px;
-  padding: 4px 9px;
-  height: 23px;
-  min-height: 23px;
-  max-height: 23px;
+  padding: 6px 10px;
+  height: 28px;
+  min-height: 28px;
+  max-height: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -226,18 +226,19 @@
 .ais-ft {
   display: flex;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 13px 12px;
   border-top: 1px solid #f3f4f6;
   flex-shrink: 0;
 }
 .ais-btn {
   flex: 1;
-  padding: 8px;
+  padding: 10px 10px;
   border: none;
   border-radius: 9px;
   font-size: 13px;
   font-weight: 500;
   line-height: 1.2;
+  min-height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -267,7 +268,8 @@
 .ais-chat-input {
   flex: 1;
   min-width: 0;
-  padding: 7px 10px;
+  height: 36px;
+  padding: 8px 10px;
   border: 1.5px solid #e5e7eb;
   border-radius: 8px;
   font-size: 13px;
@@ -278,8 +280,8 @@
 }
 .ais-chat-input:focus { border-color: #6366f1; background: #fff; }
 .ais-btn-square {
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   flex: none;
   padding: 0;
   display: flex;

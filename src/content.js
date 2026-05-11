@@ -455,6 +455,7 @@
     let hoverOutTimer = null;
     let pointerMoveScheduled = false;
     let pressStartedFromHover = false;
+    let pressPreservesAnimation = false;
 
     // Symmetric geometry: viewport-edge X positions.
     // Right side uses `viewportRight()` (excludes scrollbar) so peek
@@ -502,6 +503,11 @@
     function clearHoverTimers() {
       if (hoverInTimer) { clearTimeout(hoverInTimer); hoverInTimer = null; }
       if (hoverOutTimer) { clearTimeout(hoverOutTimer); hoverOutTimer = null; }
+    }
+
+    function cancelPositionAnimation() {
+      if (snapEndTimer) { clearTimeout(snapEndTimer); snapEndTimer = null; }
+      setTransition("none");
     }
 
     /* ---- Hover zones:
@@ -621,10 +627,10 @@
     /* ---- Pointer interaction on the fab itself ---- */
     fab.addEventListener("pointerdown", (e) => {
       if (e.button !== 0) return;
-      if (snapEndTimer) { clearTimeout(snapEndTimer); snapEndTimer = null; }
       clearHoverTimers();
 
       pressStartedFromHover = state === "hovering";
+      pressPreservesAnimation = pressStartedFromHover && snapEndTimer != null;
       state = "pressing";
       pointerId = e.pointerId;
       try { fab.setPointerCapture(pointerId); } catch {}
@@ -636,13 +642,15 @@
       offY = e.clientY - rect.top;
       downX = e.clientX;
       downY = e.clientY;
-      // Freeze the layout position immediately. The visual rect includes
-      // hover/press scale, and writing it back makes clicks drift over time.
-      setTransition("none");
-      fab.style.left = baseLeft + "px";
-      fab.style.top = baseTop + "px";
-      fab.style.right = "auto";
-      fab.style.bottom = "auto";
+      if (!pressPreservesAnimation) {
+        // Freeze the layout position immediately. The visual rect includes
+        // hover/press scale, and writing it back makes clicks drift over time.
+        cancelPositionAnimation();
+        fab.style.left = baseLeft + "px";
+        fab.style.top = baseTop + "px";
+        fab.style.right = "auto";
+        fab.style.bottom = "auto";
+      }
       fab.classList.add("ais-fab-pressing");
     });
 
@@ -652,6 +660,16 @@
       if (state === "pressing") {
         if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
         state = "dragging";
+        if (pressPreservesAnimation) {
+          const baseLeft = layoutLeft();
+          const baseTop = layoutTop();
+          cancelPositionAnimation();
+          fab.style.left = baseLeft + "px";
+          fab.style.top = baseTop + "px";
+          fab.style.right = "auto";
+          fab.style.bottom = "auto";
+          pressPreservesAnimation = false;
+        }
         fab.classList.remove("ais-fab-pressing");
       }
       // 1:1 with the pointer. No transition during drag.
@@ -679,8 +697,8 @@
 
       if (!wasDragging) {
         // Click: toggle the panel.
-        state = "idle";
-        setTransition("none");
+        state = pressStartedFromHover ? "hovering" : "idle";
+        if (!pressPreservesAnimation) setTransition("none");
         fab.classList.remove("ais-fab-clicking");
         void fab.offsetWidth;
         fab.classList.add("ais-fab-clicking");
@@ -693,8 +711,8 @@
           maybeAutoSummarize();
         }
         toggle("ais-main", panelOpen);
-        state = pressStartedFromHover ? "hovering" : "idle";
         pressStartedFromHover = false;
+        pressPreservesAnimation = false;
         evaluateHover();
         return;
       }
@@ -707,6 +725,7 @@
         },
       });
       pressStartedFromHover = false;
+      pressPreservesAnimation = false;
       startSnap();
     });
 
@@ -715,6 +734,7 @@
       if (state === "dragging") startSnap();
       else { state = "idle"; setTransition("none"); }
       pressStartedFromHover = false;
+      pressPreservesAnimation = false;
       fab.classList.remove("ais-fab-pressing");
     });
   }
