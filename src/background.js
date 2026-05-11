@@ -14,6 +14,20 @@ import {
 //
 // One port per call. Disconnect aborts via AbortController.
 
+const tabLoadStatus = new Map();
+
+chrome.tabs?.onUpdated.addListener((tabId, changeInfo) => {
+  if (!changeInfo.status) return;
+  tabLoadStatus.set(tabId, changeInfo.status);
+  if (changeInfo.status === "complete") {
+    chrome.tabs.sendMessage(tabId, { type: "tab-status", status: "complete" }).catch(() => {});
+  }
+});
+
+chrome.tabs?.onRemoved.addListener((tabId) => {
+  tabLoadStatus.delete(tabId);
+});
+
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== "ai-call") return;
 
@@ -129,10 +143,18 @@ async function runCall(messages, port, signal) {
 }
 
 // Open options page from popup / context menu helpers.
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg?.type === "open-options") {
     chrome.runtime.openOptionsPage();
     sendResponse({ ok: true });
+    return true;
+  }
+  if (msg?.type === "content-ready-state") {
+    const tabId = sender.tab?.id;
+    sendResponse({
+      ok: true,
+      tabStatus: sender.tab?.status || (tabId != null ? tabLoadStatus.get(tabId) : undefined) || "unknown",
+    });
     return true;
   }
 });

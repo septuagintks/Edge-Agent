@@ -1210,9 +1210,45 @@
   }
 
   function scheduleImplicitRun() {
-    const fire = () => setTimeout(runImplicit, 600); // small grace period for late-mounting content
-    if (document.readyState === "complete") fire();
-    else window.addEventListener("load", fire, { once: true });
+    let tabComplete = false;
+    let fired = false;
+
+    const cleanup = () => {
+      document.removeEventListener("readystatechange", onReadyState);
+      window.removeEventListener("load", onReadyState);
+      chrome.runtime.onMessage.removeListener(onRuntimeMessage);
+    };
+    const fireWhenReady = () => {
+      if (fired || !tabComplete || document.readyState !== "complete") return;
+      fired = true;
+      cleanup();
+      requestAnimationFrame(runImplicit);
+    };
+    const reportReadyState = () => {
+      chrome.runtime
+        .sendMessage({ type: "content-ready-state", readyState: document.readyState })
+        .then((res) => {
+          if (res?.tabStatus === "complete") tabComplete = true;
+          fireWhenReady();
+        })
+        .catch(() => {});
+    };
+    function onReadyState() {
+      reportReadyState();
+      fireWhenReady();
+    }
+    function onRuntimeMessage(msg) {
+      if (msg?.type !== "tab-status") return;
+      if (msg.status === "complete") {
+        tabComplete = true;
+        fireWhenReady();
+      }
+    }
+
+    chrome.runtime.onMessage.addListener(onRuntimeMessage);
+    document.addEventListener("readystatechange", onReadyState);
+    window.addEventListener("load", onReadyState, { once: true });
+    reportReadyState();
   }
 
   /* ================================================
