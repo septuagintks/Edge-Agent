@@ -42,7 +42,7 @@ export const STRINGS = {
     "panel.copied": "✓ Copied to clipboard",
     "panel.copyFail": "Copy failed, please select manually",
     "panel.apiKeyMissing": "API key not configured; open settings.",
-    "panel.optionFollowup": (opt) => `The user selected this option: "${opt}". Please help the user further, and at the end of your reply keep generating option suggestions in the same [[option]] format for useful next steps.`,
+    "panel.optionFollowup": (opt) => `The user picked this follow-up: "${opt}". Respond to it directly and helpfully, then end your reply with 2–4 new [[option]] chips that suggest useful next steps — short phrases, no numbering, each wrapped in double square brackets on its own.`,
 
     /* Options page */
     "opt.title": "⚙️ AI Summary Settings",
@@ -101,7 +101,7 @@ export const STRINGS = {
     "panel.copied": "✓ 已复制到剪贴板",
     "panel.copyFail": "复制失败，请手动选择",
     "panel.apiKeyMissing": "未设置 API Key，请打开设置进行配置。",
-    "panel.optionFollowup": (opt) => `用户选择了这个选项：“${opt}”。请进一步帮助用户，并在每一次回复结束时继续按照 [[选项]] 格式生成用户可能需要的下一步选项。`,
+    "panel.optionFollowup": (opt) => `用户选择了这个后续方向：“${opt}”。请直接针对这个选项给出具体回答，然后在回复末尾另起一行，提供 2–4 个 [[选项]] 作为下一步可选方向——每条为简短短语，用双方括号包裹，各占一行，不要编号。`,
 
     /* Options page */
     "opt.title": "⚙️ AI 总结 设置",

@@ -52,7 +52,7 @@
       "panel.copied":               "✓ Copied to clipboard",
       "panel.copyFail":             "Copy failed, please select manually",
       "panel.apiKeyMissing":        "API key not configured; open settings.",
-      "panel.optionFollowup":       (opt) => `The user selected this option: "${opt}". Please help the user further, and at the end of your reply keep generating option suggestions in the same [[option]] format for useful next steps.`,
+      "panel.optionFollowup":       (opt) => `The user picked this follow-up: "${opt}". Respond to it directly and helpfully, then end your reply with 2–4 new [[option]] chips that suggest useful next steps — short phrases, no numbering, each wrapped in double square brackets on its own.`,
     },
     zh: {
       "panel.title":                "🤖 AI 内容总结与对话",
@@ -78,7 +78,7 @@
       "panel.copied":               "✓ 已复制到剪贴板",
       "panel.copyFail":             "复制失败，请手动选择",
       "panel.apiKeyMissing":        "未设置 API Key，请打开设置进行配置。",
-      "panel.optionFollowup":       (opt) => `用户选择了这个选项：“${opt}”。请进一步帮助用户，并在每一次回复结束时继续按照 [[选项]] 格式生成用户可能需要的下一步选项。`,
+      "panel.optionFollowup":       (opt) => `用户选择了这个后续方向：“${opt}”。请直接针对这个选项给出具体回答，然后在回复末尾另起一行，提供 2–4 个 [[选项]] 作为下一步可选方向——每条为简短短语，用双方括号包裹，各占一行，不要编号。`,
     },
   };
   // English output keyword injected into the user prompt.
@@ -858,7 +858,7 @@
       e.preventDefault();
       // Dim all chips in the last response so users see it was handled.
       for (const c of body.querySelectorAll(".ais-opt")) c.classList.add("ais-opt-consumed");
-      doFollowUp(t("panel.optionFollowup", opt));
+      doFollowUp({ text: t("panel.optionFollowup", opt), display: opt });
     };
     body.addEventListener("click", handleOpt);
     body.addEventListener("keydown", (e) => {
@@ -1102,24 +1102,41 @@
     });
   }
 
-  function doFollowUp(questionOverride) {
+  // `override` may be:
+  //   - undefined  → read the input field (normal typed follow-up)
+  //   - a string   → use it for both the sent message and the history bubble
+  //   - an object  → { text, display }: `text` is what we send to the model,
+  //                  `display` is what shows in the chat history bubble
+  //                  (used for option chips: show the option label, not the
+  //                   verbose template we feed the model).
+  function doFollowUp(override) {
     if (streaming) return;
     const inputEl = $("ais-chat-input");
-    const question = (questionOverride != null ? String(questionOverride) : inputEl.value).trim();
-    if (!question) return;
+    let sendText, displayText;
+    if (override == null) {
+      sendText = displayText = inputEl.value;
+    } else if (typeof override === "string") {
+      sendText = displayText = override;
+    } else {
+      sendText = String(override.text ?? "");
+      displayText = String(override.display ?? sendText);
+    }
+    sendText = sendText.trim();
+    displayText = displayText.trim();
+    if (!sendText) return;
 
-    if (questionOverride == null) inputEl.value = "";
+    if (override == null) inputEl.value = "";
     streaming = true;
     fullText = "";
     setLoading(true);
     const b = $("ais-body");
     b.insertAdjacentHTML(
       "beforeend",
-      `<div class="ais-user-msg">👤 ${esc(question)}</div><div id="ais-current-res" class="ais-res ais-cursor">${esc(t("panel.thinking"))}</div>`,
+      `<div class="ais-user-msg">👤 ${esc(displayText)}</div><div id="ais-current-res" class="ais-res ais-cursor">${esc(t("panel.thinking"))}</div>`,
     );
     currentResNode = $("ais-current-res");
     b.scrollTop = b.scrollHeight;
-    chatHistory.push({ role: "user", content: question });
+    chatHistory.push({ role: "user", content: sendText });
 
     callAPI(chatHistory, {
       onChunk(full) {
@@ -1150,7 +1167,9 @@
           if (b) b.scrollTop = b.scrollHeight;
         }
         chatHistory.pop();
-        inputEl.value = question;
+        // Only repopulate the input for typed follow-ups; option chips
+        // should not dump their wrapped prompt back into the textbox.
+        if (override == null) inputEl.value = displayText;
         showChatMode();
       },
     });
@@ -1197,8 +1216,16 @@
       fab.style.left = pos.xRatio * window.innerWidth + "px";
       fab.style.top = pos.yRatio * window.innerHeight + "px";
     } else {
+      // First install: anchor the fab near the bottom-right, with a 10%
+      // gap between the fab's bottom edge and the viewport bottom. Using
+      // an absolute `top` (instead of `bottom`) is important — later
+      // animateTo() calls set `bottom: auto`, so a `bottom`-based anchor
+      // would cause the fab to fall to top:0 on the first hover.
+      fab.style.left = ""; // let snapInstant derive from rect after layout
       fab.style.right = FAB_DEFAULT_OFFSET + "px";
-      fab.style.bottom = FAB_DEFAULT_OFFSET + "px";
+      // Measured after mount; for now assume the configured fab size.
+      // A followup rAF will correct once offsetHeight is real.
+      fab.style.top = Math.round(window.innerHeight * 0.9 - 35) + "px";
     }
     wrap.appendChild(fab);
     document.body.appendChild(wrap);
@@ -1217,6 +1244,13 @@
         (isLeft
           ? -(fab.offsetWidth - FAB_PEEK_VISIBLE)
           : vR - FAB_PEEK_VISIBLE) + "px";
+      // Always pin `top` too, so subsequent animateTo() calls (which set
+      // right:auto, bottom:auto) have a concrete top to anchor against.
+      // Without this the fab can fall to top:0 on the first hover when it
+      // was originally positioned via `bottom`.
+      if (!fab.style.top) fab.style.top = rect.top + "px";
+      fab.style.right = "auto";
+      fab.style.bottom = "auto";
     };
 
     window.addEventListener("resize", async () => {
