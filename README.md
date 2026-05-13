@@ -13,7 +13,7 @@ API keys and settings are stored locally in chrome.storage.local.
 - Streaming AI responses through the MV3 service worker.
 - Follow-up chat after the first summary.
 - Toolbar popup action and page context-menu action.
-- English / Chinese / Japanese UI language setting.
+- UI languages supported: English, Chinese, Japanese, Korean.
 - Provider presets for OpenAI, Anthropic, Gemini, xAI, DeepSeek, and OpenRouter-compatible APIs.
 - Custom API URL, model, max tokens, temperature, stream mode, content length, system prompt, and user prompt.
 
@@ -43,18 +43,20 @@ This avoids relying on a fixed post-load timeout while still ensuring the conten
 ## Project Layout
 
 `	ext
-manifest.json         MV3 manifest
+manifest.json       MV3 manifest
 src/
-  background.js       Service worker: streaming API relay, context menu, tab load status
-  content.js          Injected UI, extraction, panel state, summary/chat workflow
-  content.css         Injected UI styles and page-CSS isolation
+  background.js     Service worker: streaming API relay, context menu, tab load status
+  content.js        Injected UI, extraction, panel state, summary/chat workflow
+  content.css       Injected UI styles and page-CSS isolation
   lib/
-    defaults.js       Default config and provider presets
-    providers.js      Provider request/response adapters
-    storage.js        chrome.storage.local wrapper
-  popup/              Toolbar popup
-options/              Full settings page
-icons/                Icon notes/assets
+    defaults.js     Default config and provider presets
+    extract.js      Page content extraction logic
+    i18n.js         Localization strings and helpers
+    providers.js    Provider request/response adapters
+    storage.js      chrome.storage.local wrapper
+  popup/            Toolbar popup
+options/            Full settings page
+icons/              Icon notes/assets
 `
 
 ## Notes
