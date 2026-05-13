@@ -8,13 +8,13 @@
  * append "Output the summarize text in {language}." to the user prompt
  * so the model adapts on its own.
  */
-export const SUPPORTED_LANGS = ["en", "zh", "ja"];
-export const LANG_LABELS = { en: "English", zh: "简体中文", ja: "日本語" };
+export const SUPPORTED_LANGS = ["en", "zh", "ja", "ko"];
+export const LANG_LABELS = { en: "English", zh: "简体中文", ja: "日本語", ko: "한국어" };
 
 // Used inside the "Output the summarize text in {language}." line we
 // append to the user prompt. Always English keywords so the model is
 // guaranteed to recognize them.
-export const OUTPUT_LANG_NAME = { en: "English", zh: "Chinese", ja: "Japanese" };
+export const OUTPUT_LANG_NAME = { en: "English", zh: "Chinese", ja: "Japanese", ko: "Korean" };
 
 export const STRINGS = {
   en: {
@@ -192,6 +192,65 @@ export const STRINGS = {
     "popup.title": "🤖 AI 要約",
     "popup.run": "✨ このページを要約",
     "popup.settings": "⚙️ 設定",
+  },
+
+  ko: {
+    /* Floating panel */
+    "panel.title": "🤖 AI 콘텐츠 요약 및 채팅",
+    "panel.copy": "📋 복사",
+    "panel.settings": "⚙️ 설정",
+    "panel.close": "✕",
+    "panel.placeholder": "아래의 '요약 시작' 버튼을 클릭하세요.<br>AI가 현재 페이지 콘텐츠를 자동으로 추출하고 분석합니다 📖",
+    "panel.fabTitle": "AI 콘텐츠 요약",
+    "panel.stop": "⏹ 중지",
+    "panel.start": "✨ 요약 시작",
+    "panel.resummarize": "🔄 다시 요약",
+    "panel.followupPlaceholder": "추가 질문을 입력하고 Enter를 누르세요...",
+    "panel.rerunTooltip": "다시 요약",
+    "panel.sendTooltip": "전송",
+    "panel.extracting": "페이지 콘텐츠 추출 중...",
+    "panel.analyzing": "AI가 분석 중...",
+    "panel.thinking": "생각 중...",
+    "panel.extractFail": "❌ 페이지 콘텐츠 추출에 실패했거나 콘텐츠가 너무 짧습니다.",
+    "panel.metaExtracted": (n) => `· ${n} 자 추출됨`,
+    "panel.emptyReply": "(AI가 빈 내용을 반환함)",
+    "panel.manuallyStopped": "수동으로 중지됨",
+    "panel.copyNothing": "복사할 내용이 없음",
+    "panel.copied": "✓ 클립보드에 복사됨",
+    "panel.copyFail": "복사 실패, 수동으로 선택하세요",
+    "panel.apiKeyMissing": "API 키가 설정되지 않았습니다. 설정을 열어주세요.",
+    "panel.optionFollowup": (opt) => `사용자가 다음 후속 질문을 선택했습니다: "${opt}". 이 질문에 대해 직접적이고 도움이 되는 방식으로 답변한 다음, 답변 끝에 다음 단계로 유용한 2~4개의 [[선택지]]를 제안하십시오. 각 선택지는 짧은 구문으로 작성하고, 이중 대괄호로 감싸며, 각 줄에 하나씩 배치하십시오. 번호는 매기지 마십시오.`,
+
+    /* Options page */
+    "opt.title": "⚙️ AI 요약 설정",
+    "opt.language": "언어",
+    "opt.mode": "요약 모드",
+    "opt.mode.off": "끄기",
+    "opt.mode.onOpen": "패널을 열 때",
+    "opt.mode.implicit": "백그라운드 실행",
+    "opt.mode.hint.off": "패널을 연 후 '요약 시작'을 클릭할 때까지 대기합니다.",
+    "opt.mode.hint.onOpen": "플로팅 버튼을 클릭하여 패널을 열면 즉시 요약을 시작합니다.",
+    "opt.mode.hint.implicit": "페이지 로드가 완료되는 즉시 백그라운드에서 요약을 시작합니다. 패널을 열면 진행 상황이나 완료된 결과가 표시됩니다.",
+    "opt.apiUrl": "API URL",
+    "opt.apiKey": "API 키",
+    "opt.model": "모델",
+    "opt.maxTokens": "최대 출력 토큰",
+    "opt.maxLen": "최대 콘텐츠 길이",
+    "opt.temperature": "온도",
+    "opt.stream": "스트림 출력",
+    "opt.sysPrompt": "시스템 프롬프트",
+    "opt.userPrompt": "사용자 프롬프트",
+    "opt.userPromptVars": "(변수: {title} {content})",
+    "opt.reset": "↩ 기본값 복원",
+    "opt.save": "💾 저장",
+    "opt.saved": "✓ 저장됨",
+    "opt.resetConfirm": "모든 설정을 기본값으로 복원하시겠습니까?",
+    "opt.resetDone": "✓ 기본값 복원 완료",
+
+    /* Popup */
+    "popup.title": "🤖 AI 요약",
+    "popup.run": "✨ 현재 페이지 요약",
+    "popup.settings": "⚙️ 설정",
   },
 };
 
